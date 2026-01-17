@@ -1010,8 +1010,14 @@
                 cell.appendChild(dotWrapper);
             });
 
-            // Cell Click (Create)
-            cell.onclick = () => openScheduleModal(null, dateStr);
+            // Cell Click - 일정이 있으면 상세보기, 없으면 새로 생성
+            cell.onclick = () => {
+                if (visibleSchedules.length > 0) {
+                    openScheduleModal(visibleSchedules[0]); // 이미 일정이 있으면 그 일정 열기
+                } else {
+                    openScheduleModal(null, dateStr); // 없으면 새로 생성
+                }
+            };
 
             els.calendarBody.appendChild(cell);
         }
