@@ -537,11 +537,26 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>동행자 (최대 5명, Enter로 구분)</label>
+                <label>동행자 (최대 5명)</label>
                 <div id="companionsContainer" class="tag-input-container">
                     <!-- Tags go here -->
                 </div>
                 <input type="text" id="schedCompanionInput" class="form-input" style="margin-top:4px;" placeholder="이름 입력 후 Enter">
+                <!-- Join as Companion (for existing schedules) -->
+                <div id="joinCompanionSection" style="display:none; margin-top:12px; padding:12px; background:#f0f7ff; border-radius:8px; border:1px solid #cce0ff;">
+                    <p style="font-size:13px; color:#0f4c81; margin-bottom:8px; font-weight:600;">🙋 나도 동행하고 싶다면?</p>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="joinNameInput" class="form-input" placeholder="이름" style="flex:1;">
+                        <select id="joinRelationInput" class="form-select" style="width:90px;">
+                            <option value="가족">가족</option>
+                            <option value="교회">교회</option>
+                            <option value="친구">친구</option>
+                            <option value="친한사이">친한사이</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <button id="joinCompanionBtn" class="btn btn-primary">신청</button>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>메모</label>
@@ -549,21 +564,6 @@
             </div>
             <div style="display:flex; gap:10px; justify-content: flex-end;">
                 <button id="saveScheduleBtn" class="btn btn-primary">등록하기 (요청)</button>
-            </div>
-            <!-- Join as Companion (for existing schedules) -->
-            <div id="joinCompanionSection" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                <p style="font-size:13px; color:#666; margin-bottom:8px;">🙋 나도 동행하고 싶다면?</p>
-                <div style="display:flex; gap:6px;">
-                    <input type="text" id="joinNameInput" class="form-input" placeholder="이름" style="flex:1;">
-                    <select id="joinRelationInput" class="form-select" style="width:90px;">
-                        <option value="가족">가족</option>
-                        <option value="교회">교회</option>
-                        <option value="친구">친구</option>
-                        <option value="친한사이">친한사이</option>
-                        <option value="기타">기타</option>
-                    </select>
-                    <button id="joinCompanionBtn" class="btn btn-primary">신청</button>
-                </div>
             </div>
             <!-- Admin Edit Controls (Hidden by default) -->
             <div id="adminScheduleControls" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
