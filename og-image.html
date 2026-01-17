@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OG Image Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: #333;
+            padding: 20px;
+        }
+        .og-card {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #0f4c81 0%, #1a365d 100%);
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+        }
+        .og-card::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .og-card::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .title {
+            font-size: 52px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+        .divider {
+            width: 400px;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
+            margin-bottom: 40px;
+            z-index: 1;
+        }
+        .verse {
+            font-size: 28px;
+            color: rgba(255,255,255,0.95);
+            text-align: center;
+            line-height: 1.8;
+            z-index: 1;
+            max-width: 900px;
+        }
+        .reference {
+            font-size: 26px;
+            color: #fbbf24;
+            font-weight: 700;
+            margin-top: 30px;
+            z-index: 1;
+        }
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 40px;
+            z-index: 1;
+        }
+        .instructions {
+            margin-top: 20px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="og-card" id="ogCard">
+            <div class="title">해수 만남의 광장</div>
+            <div class="divider"></div>
+            <div class="verse">
+                "내가 너와 함께 있어<br>
+                네가 어디로 가든지 너를 지키며<br>
+                너를 이끌어 이 땅으로 돌아오게 할지라<br>
+                내가 네게 허락한 것을 다 이루기까지<br>
+                너를 떠나지 아니하리라 하신지라"
+            </div>
+            <div class="reference">창세기 28:15</div>
+            <div class="subtitle">서로의 시간을 맞추고, 함께 다녀올 수 있도록</div>
+        </div>
+        <div class="instructions">
+            ⬆️ 이 이미지를 스크린샷 찍어서 <strong>og-image.png</strong>로 저장하세요!<br>
+            (크기: 1200 x 630px)
+        </div>
+    </div>
+</body>
+</html>
