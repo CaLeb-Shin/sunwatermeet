@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해수 만남의 광장</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0f4c81; /* 따뜻한 딥 블루 */
+            --accent-color: #e63946;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif; }
+        
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; padding-bottom: 40px; }
+        
+        /* Layout Utilities */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #0a355c; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); }
+        .btn-danger { background-color: var(--accent-color); color: white; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
+
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        h1 { font-size: 24px; color: var(--primary-color); font-weight: 700; }
+        .sub-title { font-size: 14px; color: var(--text-sub); margin-top: 4px; }
+        
+        /* Address Card */
+        .address-card {
+            background: var(--card-bg); padding: 20px; border-radius: var(--border-radius);
+            box-shadow: var(--shadow); margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+        }
+        .address-item { flex: 1; min-width: 250px; }
+        .address-label { font-size: 12px; color: var(--text-sub); font-weight: bold; margin-bottom: 4px; display: block; }
+        .address-text { font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Main Grid */
+        .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+
+        /* Section Cards */
+        .card { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-bottom: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .card-title { font-size: 18px; font-weight: 700; color: var(--primary-color); }
+
+        /* Calendar */
+        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+        .day-header { font-weight: bold; font-size: 12px; color: var(--text-sub); padding: 8px 0; }
+        .day-cell {
+            background: #f9f9f9; border-radius: 8px; padding: 8px; min-height: 80px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s; position: relative;
+        }
+        .day-cell:hover { border-color: var(--primary-color); background: #f0f7ff; }
+        .day-cell.today { background: #eef6ff; border: 1px solid var(--primary-color); font-weight: bold; }
+        .day-number { font-size: 14px; margin-bottom: 4px; display: block; }
+        .schedule-dot-wrapper { position: relative; }
+        .schedule-dot { font-size: 10px; padding: 2px 4px; border-radius: 4px; display: block; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        .schedule-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f4c81 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            margin-bottom: 6px;
+        }
+        .schedule-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #0f4c81;
+        }
+        .schedule-dot-wrapper:hover .schedule-tooltip { display: block; }
+        .tooltip-title { font-weight: 600; margin-bottom: 4px; font-size: 12px; }
+        .tooltip-list { display: flex; flex-direction: column; gap: 2px; }
+        .tooltip-list span { opacity: 0.95; }
+        .badge-req { background: #e2e8f0; color: #475569; }
+        .badge-conf { background: #dbeafe; color: #1e40af; font-weight: bold; }
+        
+        .toggle-container { display: flex; gap: 10px; margin-bottom: 10px; }
+        .toggle-btn { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid #ccc; background: white; cursor: pointer; }
+        .toggle-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        /* Forms & Lists */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--text-sub); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .tag-input-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid #ddd; border-radius: 6px; min-height: 38px; }
+        .tag { background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+        .tag span { cursor: pointer; }
+        
+        .list-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+        .list-item:last-child { border-bottom: none; }
+        .list-meta { font-size: 12px; color: var(--text-sub); display: flex; justify-content: space-between; }
+        .list-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        
+        /* Admin Badge */
+        .admin-badge { background: #fbbf24; color: #78350f; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 8px; }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal { background: white; width: 90%; max-width: 500px; padding: 24px; border-radius: var(--border-radius); max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active { display: flex; }
+        .modal-header { font-size: 18px; font-weight: bold; margin-bottom: 16px; display: flex; justify-content: space-between; }
+        .close-modal { cursor: pointer; font-size: 20px; }
+        
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px;
+            font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 2000;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Schedule List View */
+        .schedule-list-view {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #d0e3f7;
+        }
+        .schedule-list-header {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #c0d4ea;
+        }
+        .schedule-list-item {
+            background: white;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .schedule-list-item:last-child { margin-bottom: 0; }
+        .schedule-list-item:hover { transform: translateX(4px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .schedule-list-item.confirmed { border-left: 3px solid #2563eb; }
+        .schedule-list-item.requested { border-left: 3px solid #94a3b8; }
+        .schedule-list-date { font-size: 13px; font-weight: 600; color: var(--primary-color); }
+        .schedule-list-people { font-size: 12px; color: #555; margin-top: 4px; }
+        .schedule-list-companions { font-size: 11px; color: #888; margin-top: 2px; }
+        .schedule-list-empty { font-size: 13px; color: #888; text-align: center; padding: 16px; }
+        .schedule-list-item-compact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .schedule-list-item-compact:hover { background: #f0f7ff; }
+        .schedule-list-item-compact.confirmed { border-left: 3px solid #2563eb; }
+        .schedule-list-item-compact.requested { border-left: 3px solid #94a3b8; }
+        .sli-date { font-weight: 600; color: #333; min-width: 70px; }
+        .sli-time { color: #0f4c81; font-weight: 500; min-width: 45px; }
+        .sli-name { color: #555; }
+        .sli-companions { color: #666; }
+        .sli-label { color: #888; font-size: 11px; }
+
+        /* Guestbook */
+        .guestbook-form { margin-bottom: 8px; }
+        .guestbook-item {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+        .guestbook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .guestbook-name { font-weight: 600; font-size: 13px; color: var(--primary-color); }
+        .guestbook-date { font-size: 11px; color: #999; }
+        .guestbook-message { font-size: 13px; color: #444; line-height: 1.5; white-space: pre-wrap; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .container { padding: 12px; }
+            header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            h1 { font-size: 20px; }
+            .address-card { flex-direction: column; padding: 14px; }
+            .address-item { min-width: 100%; }
+            .address-text { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .card { padding: 14px; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .calendar-controls { flex-wrap: wrap; gap: 8px; }
+            .calendar-grid { gap: 4px; }
+            .day-cell { min-height: 60px; padding: 4px; }
+            .day-number { font-size: 12px; }
+            .schedule-dot { font-size: 9px; padding: 1px 3px; }
+            .toggle-container { width: 100%; justify-content: flex-start; }
+            .modal { width: 95%; padding: 16px; }
+            .btn { padding: 6px 12px; font-size: 13px; }
+            .form-input, .form-select, .form-textarea { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div>
+            <h1>해수 만남의 광장</h1>
+            <div class="sub-title">서로의 시간을 맞추고, 함께 다녀올 수 있도록</div>
+        </div>
+        <div>
+            <button id="adminModeBtn" class="btn btn-outline btn-sm">운영자 모드 🔒</button>
+        </div>
+    </header>
+
+    <!-- Address Card -->
+    <section class="address-card">
+        <div class="address-item">
+            <span class="address-label">만남 주소</span>
+            <div class="address-text">
+                서울 구로구 천왕동 120번지(금오로 865)
+                <button class="btn btn-sm btn-outline copy-btn" data-text="서울 구로구 천왕동 120번지(금오로 865)">📋 복사</button>
+            </div>
+        </div>
+        <div class="address-item">
+            <span class="address-label">우편 주소</span>
+            <div class="address-text">
+                서울 구로우체국 사서함 164호 1824번 신해수
+                <button class="btn btn-sm btn-outline copy-btn" data-text="서울 구로우체국 사서함 164호 1824번 신해수">📋 복사</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-grid">
+        
+        <!-- Left Column: Calendar -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">일정 관리</div>
+            </div>
+            <p style="font-size: 14px; color: #444; margin-bottom: 12px; background: #f0f7ff; padding: 12px 14px; border-radius: 8px; line-height: 1.6; border: 1px solid #d0e3f7;">
+                💡 갈 수 있는 날짜가 이미 등록된 경우, 날짜를 클릭해서<br>
+                <span style="color: #e63946; font-size: 16px; font-weight: 700;">👉 동행자로 등록</span>해주시면 됩니다!
+            </p>
+
+            <!-- Schedule List View -->
+            <div id="scheduleListView" class="schedule-list-view">
+                <div class="schedule-list-header">📋 다가오는 일정</div>
+                <div id="scheduleListItems">
+                    <!-- Items will be injected here -->
+                </div>
+            </div>
+            
+            <div class="calendar-controls">
+                <button class="btn btn-sm btn-outline" id="prevMonth">&lt; 이전 달</button>
+                <span id="currentMonthLabel" style="font-weight:bold;"></span>
+                <button class="btn btn-sm btn-outline" id="nextMonth">다음 달 &gt;</button>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="day-header">일</div>
+                <div class="day-header">월</div>
+                <div class="day-header">화</div>
+                <div class="day-header">수</div>
+                <div class="day-header">목</div>
+                <div class="day-header">금</div>
+                <div class="day-header">토</div>
+                <!-- Days will be injected here -->
+            </div>
+            <div id="calendarBody" class="calendar-grid" style="margin-top: 8px;"></div>
+        </section>
+
+        <!-- Right Column: Sidebar -->
+        <aside>
+            <!-- 1. Reservation Info -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">온라인민원 예약</div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <a id="reservationLink" href="#" target="_blank" class="btn btn-primary" style="display:block; text-align:center; text-decoration:none;">예약 사이트 열기</a>
+                </div>
+                <div style="margin-bottom: 12px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; font-size: 13px; color: #856404; font-weight: 600;">
+                    ⚠️ 예약하신 이후에 <span style="color: #e63946; text-decoration: underline;">신청 내역기록</span>에 반드시 기록해주세요!
+                </div>
+                <ul style="font-size: 13px; padding-left: 20px; color: var(--text-sub);">
+                    <li>1. 링크 접속 후 로그인</li>
+                    <li>2. '온라인민원' > '접견 예약' 선택</li>
+                    <li>3. 날짜와 시간을 확인 후 신청</li>
+                    <li>4. 신청 내역을 '신청 내역 게시판'에 공유</li>
+                </ul>
+            </div>
+
+            <!-- 2. Application Log -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">신청 내역 기록</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-sm btn-outline" id="openBulkLogBtn" style="display:none;">📋 일괄등록</button>
+                        <button class="btn btn-sm btn-outline" id="openLogModalBtn">+ 기록하기</button>
+                    </div>
+                </div>
+                <div style="margin-top:10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; font-size: 12px; color: #856404; line-height: 1.5;">
+                    ⚠️ <strong>법무부 사이트</strong>에서 <strong>예약 확정</strong> 하신 뒤에<br>
+                    <span style="color: #e63946;">[+ 기록하기]</span>를 눌러 기록해주세요!<br>
+                    <span style="font-size:11px; color:#997404;">→ 달력에 자동으로 추가됩니다</span>
+                </div>
+            </div>
+
+            <!-- 3. Guestbook -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💬 방명록</div>
+                </div>
+                <div class="guestbook-form">
+                    <input type="text" id="guestbookName" class="form-input" placeholder="이름" style="margin-bottom:8px;">
+                    <textarea id="guestbookMessage" class="form-textarea" rows="2" placeholder="메시지를 남겨주세요..." style="margin-bottom:8px;"></textarea>
+                    <button id="saveGuestbookBtn" class="btn btn-primary btn-sm" style="width:100%;">남기기</button>
+                </div>
+                <div id="guestbookList" style="margin-top:12px; max-height:300px; overflow-y:auto;">
+                    <!-- Guestbook items injected here -->
+                </div>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<!-- Modals -->
+
+<!-- Admin Login Modal -->
+<div id="adminModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span>운영자 확인</span>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="form-group">
+            <label>Admin Key 입력</label>
+            <input type="password" id="adminKeyInput" class="form-input" placeholder="운영자 키를 입력하세요">
+        </div>
+        <button id="adminLoginBtn" class="btn btn-primary" style="width:100%">인증</button>
+    </div>
+</div>
+
+<!-- Schedule Modal -->
+<div id="scheduleModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span id="scheduleModalTitle">일정 등록</span>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div id="scheduleForm">
+            <input type="hidden" id="scheduleId">
+            <div class="form-group">
+                <label>날짜</label>
+                <input type="date" id="schedDate" class="form-input" readonly>
+            </div>
+            <div class="form-group">
+                <label>시간 (HH:mm) *</label>
+                <input type="time" id="schedTime" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>예약자 *</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="schedReserver" class="form-input" required style="flex:1;">
+                    <select id="schedReserverRelation" class="form-select" style="width:80px;">
+                        <option value="가족">가족</option>
+                        <option value="교회">교회</option>
+                        <option value="친구">친구</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>동행자 (최대 5명, Enter로 구분)</label>
+                <div id="companionsContainer" class="tag-input-container">
+                    <!-- Tags go here -->
+                </div>
+                <input type="text" id="schedCompanionInput" class="form-input" style="margin-top:4px;" placeholder="이름 입력 후 Enter">
+            </div>
+            <div class="form-group">
+                <label>메모</label>
+                <textarea id="schedMemo" class="form-textarea" rows="3"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; justify-content: flex-end;">
+                <button id="saveScheduleBtn" class="btn btn-primary">등록하기 (요청)</button>
+            </div>
+            <!-- Join as Companion (for existing schedules) -->
+            <div id="joinCompanionSection" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                <p style="font-size:13px; color:#666; margin-bottom:8px;">🙋 나도 동행하고 싶다면?</p>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="joinNameInput" class="form-input" placeholder="이름" style="flex:1;">
+                    <select id="joinRelationInput" class="form-select" style="width:80px;">
+                        <option value="가족">가족</option>
+                        <option value="교회">교회</option>
+                        <option value="친구">친구</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <button id="joinCompanionBtn" class="btn btn-primary">신청</button>
+                </div>
+            </div>
+            <!-- Admin Edit Controls (Hidden by default) -->
+            <div id="adminScheduleControls" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                <p style="font-size:12px; color:#666; margin-bottom:5px;">운영자 수정 모드</p>
+                <button id="updateScheduleBtn" class="btn btn-sm btn-primary">수정 완료</button>
+                <button id="confirmScheduleBtn" class="btn btn-sm btn-primary" style="background-color:#2563eb;">확정 상태로 변경</button>
+                <button id="deleteScheduleBtn" class="btn btn-sm btn-danger">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Modal -->
+<div id="logModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span>신청 내역 기록</span>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="form-group">
+            <label>예약자 *</label>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="logWriter" class="form-input" placeholder="이름" style="flex:1;">
+                <select id="logWriterRelation" class="form-select" style="width:80px;">
+                    <option value="가족">가족</option>
+                    <option value="교회">교회</option>
+                    <option value="친구">친구</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>동행자 (Enter로 추가)</label>
+            <div style="display:flex; gap:6px; margin-bottom:4px;">
+                <input type="text" id="logCompanionInput" class="form-input" placeholder="이름" style="flex:1;">
+                <select id="logCompanionRelation" class="form-select" style="width:80px;">
+                    <option value="가족">가족</option>
+                    <option value="교회">교회</option>
+                    <option value="친구">친구</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div id="logCompanionsContainer" class="tag-input-container">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>접견 예약일시 * <span style="font-size:11px; color:#e63946;">(법무부 사이트에서 확정 후 적어주세요)</span></label>
+            <div style="display:flex; gap:8px;">
+                <select id="logTargetMonth" class="form-select" style="width:auto;">
+                    <option value="01">1월</option>
+                    <option value="02">2월</option>
+                    <option value="03">3월</option>
+                    <option value="04">4월</option>
+                    <option value="05">5월</option>
+                    <option value="06">6월</option>
+                    <option value="07">7월</option>
+                    <option value="08">8월</option>
+                    <option value="09">9월</option>
+                    <option value="10">10월</option>
+                    <option value="11">11월</option>
+                    <option value="12">12월</option>
+                </select>
+                <select id="logTargetDay" class="form-select" style="width:auto;"></select>
+                <select id="logTargetHour" class="form-select" style="width:auto;">
+                    <option value="09">09시</option>
+                    <option value="10">10시</option>
+                    <option value="11">11시</option>
+                    <option value="13">13시</option>
+                    <option value="14">14시</option>
+                    <option value="15">15시</option>
+                    <option value="16">16시</option>
+                </select>
+                <select id="logTargetMin" class="form-select" style="width:auto;">
+                    <option value="00">00분</option>
+                    <option value="30">30분</option>
+                </select>
+            </div>
+            <p style="font-size:11px; color:#888; margin-top:4px;">📅 2026년 고정</p>
+        </div>
+        <div class="form-group">
+            <label>상태</label>
+            <select id="logStatus" class="form-select">
+                <option value="신청완료">신청완료</option>
+                <option value="대기">대기</option>
+                <option value="확정">확정</option>
+                <option value="실패">실패</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>메모</label>
+            <textarea id="logMemo" class="form-textarea"></textarea>
+        </div>
+        <button id="saveLogBtn" class="btn btn-primary" style="width:100%">저장 (달력에 자동 추가)</button>
+    </div>
+</div>
+<!-- Bulk Log Modal (Admin Only) -->
+<div id="bulkLogModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span>📋 일괄 등록 (운영자 전용)</span>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="form-group">
+            <label>일정 텍스트 입력</label>
+            <textarea id="bulkLogText" class="form-textarea" rows="8" placeholder="예시:
+19일 월요일 11시 / 예약자: 송종임
+20일 화요일 10시 45분 / 예약자: 안경복
+21일 수요일 10시 45분 / 예약자: 송종임"></textarea>
+            <p style="font-size:11px; color:#888; margin-top:4px;">
+                형식: [일]일 [요일] [시]시 [분]분 / 예약자: [이름]<br>
+                📅 2026년 현재 월 기준으로 등록됩니다
+            </p>
+        </div>
+        <div id="bulkLogPreview" style="display:none; margin-bottom:12px; padding:10px; background:#f0f7ff; border-radius:6px; font-size:12px;">
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button id="previewBulkLogBtn" class="btn btn-outline" style="flex:1;">미리보기</button>
+            <button id="saveBulkLogBtn" class="btn btn-primary" style="flex:1;">등록하기</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">메시지</div>
+
+<script>
+    // --- Configuration & Constants ---
+    const RESERVATION_URL = "https://minwon.moj.go.kr/minwon/1996/subview.do?enc=Zm5jdDF8QEB8JTJGcHJpc29uUmVzZXJ2YXRpb24lMkZtaW53b24lMkY0JTJGYXJ0Y2xTdGVwMS5kbyUzRg%3D%3D";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2B1MnErwuU-wqZlj9xtbfxWjI3SjTrI4",
+        authDomain: "sunwatermeet.firebaseapp.com",
+        projectId: "sunwatermeet",
+        storageBucket: "sunwatermeet.firebasestorage.app",
+        messagingSenderId: "47353854520",
+        appId: "1:47353854520:web:52f0a03ad195f205c0c4cd",
+        measurementId: "G-Y0EDLD3EGL"
+    };
+
+    // --- Firebase Initialization ---
+    let db, functions;
+    try {
+        const app = firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        functions = firebase.functions();
+        // functions.useEmulator("localhost", 5001); // 로컬 테스트시 주석 해제
+    } catch (e) {
+        console.error("Firebase Init Error:", e);
+        alert("Firebase 설정이 필요합니다. 코드 내부의 firebaseConfig를 확인해주세요.");
+    }
+
+    // --- State Management ---
+    let state = {
+        isAdmin: false,
+        adminKey: null,
+        currentDate: new Date(),
+        selectedDateStr: null, // YYYY-MM-DD
+        viewMode: 'ALL', // ALL or CONFIRMED
+        schedules: [],
+        companions: [],
+        logCompanions: []
+    };
+
+    // --- DOM Elements ---
+    const els = {
+        calendarBody: document.getElementById('calendarBody'),
+        scheduleListItems: document.getElementById('scheduleListItems'),
+        currentMonthLabel: document.getElementById('currentMonthLabel'),
+        adminModeBtn: document.getElementById('adminModeBtn'),
+        reservationLink: document.getElementById('reservationLink'),
+        // Modals
+        modals: document.querySelectorAll('.modal-overlay'),
+        closeModalBtns: document.querySelectorAll('.close-modal'),
+        // Schedule
+        scheduleModal: document.getElementById('scheduleModal'),
+        scheduleModalTitle: document.getElementById('scheduleModalTitle'),
+        schedDate: document.getElementById('schedDate'),
+        schedTime: document.getElementById('schedTime'),
+        schedReserver: document.getElementById('schedReserver'),
+        schedReserverRelation: document.getElementById('schedReserverRelation'),
+        schedMemo: document.getElementById('schedMemo'),
+        companionsContainer: document.getElementById('companionsContainer'),
+        companionInput: document.getElementById('schedCompanionInput'),
+        saveScheduleBtn: document.getElementById('saveScheduleBtn'),
+        joinCompanionSection: document.getElementById('joinCompanionSection'),
+        joinNameInput: document.getElementById('joinNameInput'),
+        joinRelationInput: document.getElementById('joinRelationInput'),
+        joinCompanionBtn: document.getElementById('joinCompanionBtn'),
+        adminScheduleControls: document.getElementById('adminScheduleControls'),
+        confirmScheduleBtn: document.getElementById('confirmScheduleBtn'),
+        updateScheduleBtn: document.getElementById('updateScheduleBtn'),
+        deleteScheduleBtn: document.getElementById('deleteScheduleBtn'),
+        // Log
+        logModal: document.getElementById('logModal'),
+        logWriter: document.getElementById('logWriter'),
+        logWriterRelation: document.getElementById('logWriterRelation'),
+        logCompanionsContainer: document.getElementById('logCompanionsContainer'),
+        logCompanionInput: document.getElementById('logCompanionInput'),
+        logCompanionRelation: document.getElementById('logCompanionRelation'),
+        logTargetMonth: document.getElementById('logTargetMonth'),
+        logTargetDay: document.getElementById('logTargetDay'),
+        logTargetHour: document.getElementById('logTargetHour'),
+        logTargetMin: document.getElementById('logTargetMin'),
+        logStatus: document.getElementById('logStatus'),
+        logMemo: document.getElementById('logMemo'),
+        saveLogBtn: document.getElementById('saveLogBtn'),
+        // Bulk Log (Admin)
+        openBulkLogBtn: document.getElementById('openBulkLogBtn'),
+        bulkLogModal: document.getElementById('bulkLogModal'),
+        bulkLogText: document.getElementById('bulkLogText'),
+        bulkLogPreview: document.getElementById('bulkLogPreview'),
+        previewBulkLogBtn: document.getElementById('previewBulkLogBtn'),
+        saveBulkLogBtn: document.getElementById('saveBulkLogBtn'),
+        // Guestbook
+        guestbookName: document.getElementById('guestbookName'),
+        guestbookMessage: document.getElementById('guestbookMessage'),
+        saveGuestbookBtn: document.getElementById('saveGuestbookBtn'),
+        guestbookList: document.getElementById('guestbookList'),
+        // Admin
+        adminModal: document.getElementById('adminModal'),
+        adminKeyInput: document.getElementById('adminKeyInput'),
+        adminLoginBtn: document.getElementById('adminLoginBtn')
+    };
+
+    // --- Initialization ---
+    function init() {
+        els.reservationLink.href = RESERVATION_URL;
+        
+        // Load Admin Key from session storage if exists
+        const savedKey = sessionStorage.getItem('adminKey');
+        if (savedKey === '0525') {
+            state.adminKey = savedKey;
+            state.isAdmin = true;
+            updateAdminUI();
+        }
+
+        setupEventListeners();
+        renderCalendar();
+        
+        if (db) {
+            fetchSchedules();
+            fetchLogs();
+            fetchGuestbook();
+        }
+    }
+
+    function setupEventListeners() {
+        // Calendar Nav
+        document.getElementById('prevMonth').onclick = () => changeMonth(-1);
+        document.getElementById('nextMonth').onclick = () => changeMonth(1);
+        
+        // View Toggles
+
+        // Copy Buttons
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.onclick = () => {
+                navigator.clipboard.writeText(btn.dataset.text);
+                showToast("주소가 복사되었습니다.");
+            };
+        });
+
+        // Modal Open/Close
+        els.closeModalBtns.forEach(btn => btn.onclick = () => closeAllModals());
+        window.onclick = (e) => { if (e.target.classList.contains('modal-overlay')) closeAllModals(); };
+
+        // Admin Mode
+        els.adminModeBtn.onclick = () => {
+            if (state.isAdmin) {
+                // Logout
+                state.isAdmin = false;
+                state.adminKey = null;
+                sessionStorage.removeItem('adminKey');
+                updateAdminUI();
+                showToast("운영자 모드 해제");
+            } else {
+                // Open Login Modal
+                els.adminModal.classList.add('active');
+            }
+        };
+
+        els.adminLoginBtn.onclick = async () => {
+            const key = els.adminKeyInput.value;
+            if (!key) return alert("키를 입력하세요.");
+            
+            if (key !== '0525') {
+                return alert("운영자 키가 올바르지 않습니다.");
+            }
+            
+            state.adminKey = key;
+            state.isAdmin = true;
+            sessionStorage.setItem('adminKey', key);
+            updateAdminUI();
+            els.adminModal.classList.remove('active');
+            els.adminKeyInput.value = '';
+            showToast("운영자 모드 활성화");
+        };
+
+        // Companion Input
+        els.companionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) {
+                e.preventDefault();
+                addCompanion(els.companionInput.value.trim());
+                els.companionInput.value = '';
+            }
+        });
+
+        // Save Schedule (Create)
+        els.saveScheduleBtn.onclick = createSchedule;
+
+        // Admin Schedule Actions
+        els.confirmScheduleBtn.onclick = () => callFunction('confirmSchedule', { scheduleId: document.getElementById('scheduleId').value, key: state.adminKey });
+        els.updateScheduleBtn.onclick = updateSchedule; // Update uses a different flow to include payload
+        els.deleteScheduleBtn.onclick = () => {
+            if(confirm("정말 삭제하시겠습니까?")) {
+                callFunction('deleteSchedule', { scheduleId: document.getElementById('scheduleId').value, key: state.adminKey });
+            }
+        };
+
+        // Join as Companion
+        els.joinCompanionBtn.onclick = joinAsCompanion;
+
+        // Log Actions
+        document.getElementById('openLogModalBtn').onclick = () => {
+            resetLogForm();
+            els.logModal.classList.add('active');
+        };
+        els.logCompanionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.isComposing) {
+                e.preventDefault();
+                const name = els.logCompanionInput.value.trim();
+                const relation = els.logCompanionRelation.value;
+                if (name) {
+                    addLogCompanion(`${name}(${relation})`);
+                    els.logCompanionInput.value = '';
+                }
+            }
+        });
+        els.logTargetMonth.addEventListener('change', updateLogDayOptions);
+        els.saveLogBtn.onclick = createLog;
+
+        // Bulk Log Actions (Admin)
+        els.openBulkLogBtn.onclick = () => {
+            els.bulkLogText.value = '';
+            els.bulkLogPreview.style.display = 'none';
+            els.bulkLogModal.classList.add('active');
+        };
+        els.previewBulkLogBtn.onclick = previewBulkLog;
+        els.saveBulkLogBtn.onclick = saveBulkLog;
+
+        // Guestbook Actions
+        els.saveGuestbookBtn.onclick = createGuestbookEntry;
+    }
+
+    // --- Calendar Logic ---
+    function changeMonth(delta) {
+        state.currentDate.setMonth(state.currentDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function setViewMode(mode, btn) {
+        state.viewMode = mode;
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCalendar(); // Re-render filtering
+    }
+
+    function renderCalendar() {
+        const year = state.currentDate.getFullYear();
+        const month = state.currentDate.getMonth();
+        
+        els.currentMonthLabel.innerText = `${year}년 ${month + 1}월`;
+        els.calendarBody.innerHTML = '';
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        const startDayOfWeek = firstDay.getDay(); // 0(Sun) - 6(Sat)
+        const totalDays = lastDay.getDate();
+
+        // Empty cells before start
+        for (let i = 0; i < startDayOfWeek; i++) {
+            const emptyCell = document.createElement('div');
+            els.calendarBody.appendChild(emptyCell);
+        }
+
+        // Days
+        for (let d = 1; d <= totalDays; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const cell = document.createElement('div');
+            cell.className = 'day-cell';
+            
+            // Highlight today
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (dateStr === todayStr) cell.classList.add('today');
+
+            // Day Number
+            const numSpan = document.createElement('span');
+            numSpan.className = 'day-number';
+            numSpan.innerText = d;
+            cell.appendChild(numSpan);
+
+            // Schedules for this day
+            const daySchedules = state.schedules.filter(s => s.date === dateStr);
+            
+            // Filter Logic
+            const visibleSchedules = daySchedules.filter(s => {
+                if (state.viewMode === 'CONFIRMED') return s.status === 'CONFIRMED';
+                return true;
+            });
+
+            // Sort by time
+            visibleSchedules.sort((a, b) => a.time.localeCompare(b.time));
+
+            visibleSchedules.forEach(s => {
+                const dotWrapper = document.createElement('div');
+                dotWrapper.className = 'schedule-dot-wrapper';
+                
+                const dot = document.createElement('div');
+                dot.className = `schedule-dot ${s.status === 'CONFIRMED' ? 'badge-conf' : 'badge-req'}`;
+                const companionCount = s.companions && s.companions.length > 0 ? ` +${s.companions.length}` : '';
+                dot.innerText = `${s.time} ${s.reserverName}${companionCount}`;
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    openScheduleModal(s);
+                };
+                
+                // Custom tooltip
+                if (s.companions && s.companions.length > 0) {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'schedule-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="tooltip-title">👥 동행자</div>
+                        <div class="tooltip-list">${s.companions.map(c => `<span>• ${c}</span>`).join('')}</div>
+                    `;
+                    dotWrapper.appendChild(tooltip);
+                }
+                
+                dotWrapper.appendChild(dot);
+                cell.appendChild(dotWrapper);
+            });
+
+            // Cell Click (Create)
+            cell.onclick = () => openScheduleModal(null, dateStr);
+
+            els.calendarBody.appendChild(cell);
+        }
+
+        renderScheduleList();
+    }
+
+    function renderScheduleList() {
+        els.scheduleListItems.innerHTML = '';
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const upcomingSchedules = state.schedules
+            .filter(s => {
+                const schedDate = new Date(s.date);
+                if (state.viewMode === 'CONFIRMED' && s.status !== 'CONFIRMED') return false;
+                return schedDate >= today;
+            })
+            .sort((a, b) => {
+                const dateCompare = a.date.localeCompare(b.date);
+                if (dateCompare !== 0) return dateCompare;
+                return a.time.localeCompare(b.time);
+            });
+
+        if (upcomingSchedules.length === 0) {
+            els.scheduleListItems.innerHTML = '<div class="schedule-list-empty">예정된 일정이 없습니다</div>';
+            return;
+        }
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        
+        // Group by week
+        const weeks = {};
+        upcomingSchedules.forEach(s => {
+            const date = new Date(s.date + 'T00:00:00');
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            const weekKey = weekStart.toISOString().split('T')[0];
+            if (!weeks[weekKey]) weeks[weekKey] = [];
+            weeks[weekKey].push(s);
+        });
+
+        Object.keys(weeks).sort().forEach(weekKey => {
+            const weekDate = new Date(weekKey + 'T00:00:00');
+            const weekEnd = new Date(weekDate);
+            weekEnd.setDate(weekDate.getDate() + 6);
+            
+            const weekLabel = document.createElement('div');
+            weekLabel.style.cssText = 'font-size:11px; color:#0f4c81; font-weight:600; margin:8px 0 4px; padding-bottom:4px; border-bottom:1px dashed #c0d4ea;';
+            weekLabel.textContent = `📅 ${weekDate.getMonth()+1}/${weekDate.getDate()} ~ ${weekEnd.getMonth()+1}/${weekEnd.getDate()}`;
+            els.scheduleListItems.appendChild(weekLabel);
+
+            weeks[weekKey].forEach(s => {
+                const date = new Date(s.date + 'T00:00:00');
+                const day = date.getDate();
+                const dayName = dayNames[date.getDay()];
+                
+                const div = document.createElement('div');
+                div.className = `schedule-list-item-compact ${s.status === 'CONFIRMED' ? 'confirmed' : 'requested'}`;
+                div.onclick = () => openScheduleModal(s);
+                
+                const statusIcon = s.status === 'CONFIRMED' ? '✅' : '⏳';
+                const companionsText = s.companions && s.companions.length > 0 
+                    ? `<span class="sli-label">동행:</span> ${s.companions.join(', ')}` 
+                    : '';
+
+                div.innerHTML = `
+                    <span class="sli-date">${statusIcon} ${day}일(${dayName})</span>
+                    <span class="sli-time">${s.time}</span>
+                    <span class="sli-name"><span class="sli-label">예약:</span> ${s.reserverName}</span>
+                    ${companionsText ? `<span class="sli-companions">${companionsText}</span>` : ''}
+                `;
+                els.scheduleListItems.appendChild(div);
+            });
+        });
+    }
+
+    // --- Schedule Functions ---
+    function openScheduleModal(schedule, dateStr) {
+        resetScheduleForm();
+        els.scheduleModal.classList.add('active');
+
+        if (schedule) {
+            // View/Edit Mode
+            document.getElementById('scheduleId').value = schedule.id;
+            els.scheduleModalTitle.innerText = "일정 상세";
+            els.schedDate.value = schedule.date;
+            els.schedTime.value = schedule.time;
+            els.schedReserver.value = schedule.reserverName;
+            els.schedMemo.value = schedule.memo || '';
+            
+            // Companions
+            state.companions = [...(schedule.companions || [])];
+            renderCompanions();
+
+            // Make fields readonly for normal users
+            els.schedTime.readOnly = !state.isAdmin;
+            els.schedReserver.readOnly = !state.isAdmin;
+            els.schedMemo.readOnly = !state.isAdmin;
+            els.companionInput.style.display = state.isAdmin ? 'block' : 'none';
+
+            // Show join section for normal users
+            els.joinCompanionSection.style.display = state.isAdmin ? 'none' : 'block';
+            els.joinNameInput.value = '';
+
+            // Admin Controls
+            if (state.isAdmin) {
+                els.adminScheduleControls.style.display = 'block';
+                els.saveScheduleBtn.style.display = 'none';
+                
+                els.confirmScheduleBtn.innerText = schedule.status === 'CONFIRMED' ? "이미 확정됨" : "확정하기";
+                els.confirmScheduleBtn.disabled = schedule.status === 'CONFIRMED';
+            } else {
+                els.adminScheduleControls.style.display = 'none';
+                els.saveScheduleBtn.style.display = 'none';
+            }
+        } else {
+            // Create Mode
+            els.scheduleModalTitle.innerText = "일정 요청하기";
+            els.schedDate.value = dateStr || new Date().toISOString().split('T')[0];
+            els.saveScheduleBtn.style.display = 'block';
+            els.adminScheduleControls.style.display = 'none';
+            els.joinCompanionSection.style.display = 'none';
+            
+            // Make fields editable
+            els.schedTime.readOnly = false;
+            els.schedReserver.readOnly = false;
+            els.schedMemo.readOnly = false;
+            els.companionInput.style.display = 'block';
+        }
+    }
+
+    async function joinAsCompanion() {
+        const name = els.joinNameInput.value.trim();
+        const relation = els.joinRelationInput.value;
+        const scheduleId = document.getElementById('scheduleId').value;
+        
+        if (!name) return alert("이름을 입력해주세요.");
+        if (state.companions.length >= 5) return alert("동행자는 최대 5명까지 가능합니다.");
+        
+        const nameWithRelation = `${name}(${relation})`;
+
+        try {
+            const newCompanions = [...state.companions, nameWithRelation];
+            await db.collection('schedules').doc(scheduleId).update({
+                companions: newCompanions
+            });
+            showToast(`${name}님이 동행자로 추가되었습니다!`);
+            closeAllModals();
+        } catch (e) {
+            console.error(e);
+            alert("동행 신청 실패: " + e.message);
+        }
+    }
+
+    function resetScheduleForm() {
+        document.getElementById('scheduleId').value = '';
+        els.schedTime.value = '';
+        els.schedReserver.value = '';
+        els.schedMemo.value = '';
+        state.companions = [];
+        renderCompanions();
+        els.joinCompanionSection.style.display = 'none';
+        els.joinNameInput.value = '';
+    }
+
+    function addCompanion(name) {
+        if (!name) return;
+        if (state.companions.length >= 5) return alert("동행자는 최대 5명입니다.");
+        state.companions.push(name);
+        renderCompanions();
+    }
+
+    function removeCompanion(index) {
+        state.companions.splice(index, 1);
+        renderCompanions();
+    }
+
+    function renderCompanions() {
+        els.companionsContainer.innerHTML = '';
+        state.companions.forEach((c, i) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `${c} <span onclick="removeCompanion(${i})">×</span>`;
+            els.companionsContainer.appendChild(tag);
+        });
+    }
+
+    async function createSchedule() {
+        const date = els.schedDate.value;
+        const time = els.schedTime.value;
+        const reserver = els.schedReserver.value.trim();
+        const reserverRelation = els.schedReserverRelation.value;
+
+        if (!date || !time || !reserver) return alert("필수 항목을 입력해주세요.");
+
+        const reserverWithRelation = `${reserver}(${reserverRelation})`;
+
+        try {
+            await db.collection('schedules').add({
+                date, time,
+                reserverName: reserverWithRelation,
+                companions: state.companions,
+                memo: els.schedMemo.value,
+                status: "REQUESTED",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("일정이 요청되었습니다.");
+            closeAllModals();
+        } catch (e) {
+            console.error(e);
+            alert("저장 실패: " + e.message);
+        }
+    }
+
+    async function updateSchedule() {
+        const id = document.getElementById('scheduleId').value;
+        const payload = {
+            time: els.schedTime.value,
+            reserverName: els.schedReserver.value,
+            companions: state.companions,
+            memo: els.schedMemo.value
+        };
+
+        // Call Cloud Function to verify key and update
+        try {
+            const updateFn = functions.httpsCallable('updateSchedule');
+            await updateFn({ scheduleId: id, key: state.adminKey, payload });
+            showToast("수정되었습니다.");
+            closeAllModals();
+        } catch (e) {
+            alert("수정 실패: " + e.message);
+        }
+    }
+
+    function fetchSchedules() {
+        db.collection('schedules').orderBy('date').orderBy('time')
+            .onSnapshot(snapshot => {
+                state.schedules = [];
+                snapshot.forEach(doc => {
+                    state.schedules.push({ id: doc.id, ...doc.data() });
+                });
+                renderCalendar();
+            });
+    }
+
+    // --- Log Functions ---
+    function addLogCompanion(name) {
+        if (!name) return;
+        if (state.logCompanions.length >= 5) return alert("동행자는 최대 5명입니다.");
+        state.logCompanions.push(name);
+        renderLogCompanions();
+    }
+
+    function removeLogCompanion(index) {
+        state.logCompanions.splice(index, 1);
+        renderLogCompanions();
+    }
+    window.removeLogCompanion = removeLogCompanion;
+
+    function renderLogCompanions() {
+        els.logCompanionsContainer.innerHTML = '';
+        state.logCompanions.forEach((c, i) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `${c} <span onclick="removeLogCompanion(${i})">×</span>`;
+            els.logCompanionsContainer.appendChild(tag);
+        });
+    }
+
+    async function createLog() {
+        const writer = els.logWriter.value.trim();
+        const writerRelation = els.logWriterRelation.value;
+        const month = els.logTargetMonth.value;
+        const day = els.logTargetDay.value;
+        const hour = els.logTargetHour.value;
+        const min = els.logTargetMin.value;
+        
+        if(!writer) return alert("예약자 이름을 입력해주세요.");
+        if(!day) return alert("접견 예약일을 선택해주세요.");
+
+        const reserverWithRelation = `${writer}(${writerRelation})`;
+        const dateStr = `2026-${month}-${day}`;
+        const timeStr = `${hour}:${min}`;
+        const targetDate = new Date(`2026-${month}-${day}T${hour}:${min}:00`);
+
+        try {
+            await db.collection('applications_log').add({
+                writerName: reserverWithRelation,
+                companions: state.logCompanions,
+                appliedAt: new Date(),
+                targetVisitAt: targetDate,
+                resultStatus: els.logStatus.value,
+                memo: els.logMemo.value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            await db.collection('schedules').add({
+                date: dateStr,
+                time: timeStr,
+                reserverName: reserverWithRelation,
+                companions: state.logCompanions,
+                memo: els.logMemo.value,
+                status: els.logStatus.value === '확정' ? 'CONFIRMED' : 'REQUESTED',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            showToast("기록 완료! 달력에 자동 추가되었습니다.");
+            closeAllModals();
+        } catch (e) {
+            console.error(e);
+            alert("저장 실패: " + e.message);
+        }
+    }
+
+    function fetchLogs() {
+        // Log list display disabled - data still saved to Firestore
+    }
+    window.removeCompanion = removeCompanion;
+
+    // --- Bulk Log Functions (Admin) ---
+    function parseBulkLogText(text) {
+        const lines = text.trim().split('\n').filter(line => line.trim());
+        const results = [];
+        const currentMonth = new Date().getMonth() + 1;
+
+        for (const line of lines) {
+            try {
+                // 패턴: "19일 월요일 11시" 또는 "20일 화요일 10시 45분" / 예약자: 이름
+                const match = line.match(/(\d+)일\s*\S*요일?\s*(\d+)시\s*(\d+)?분?\s*\/?\s*예약자[:\s]*(.+)/);
+                
+                if (match) {
+                    const day = match[1].padStart(2, '0');
+                    const hour = match[2].padStart(2, '0');
+                    const minute = (match[3] || '0').padStart(2, '0');
+                    const reserver = match[4].trim();
+
+                    const dateStr = `2026-${String(currentMonth).padStart(2, '0')}-${day}`;
+                    const timeStr = `${hour}:${minute}`;
+
+                    results.push({
+                        date: dateStr,
+                        time: timeStr,
+                        reserverName: reserver,
+                        companions: [],
+                        memo: '',
+                        status: 'CONFIRMED',
+                        original: line.trim()
+                    });
+                }
+            } catch (e) {
+                console.warn('파싱 실패:', line, e);
+            }
+        }
+        return results;
+    }
+
+    function previewBulkLog() {
+        const text = els.bulkLogText.value;
+        const parsed = parseBulkLogText(text);
+
+        if (parsed.length === 0) {
+            els.bulkLogPreview.innerHTML = '<span style="color:#e63946;">⚠️ 파싱된 일정이 없습니다. 형식을 확인해주세요.</span>';
+            els.bulkLogPreview.style.display = 'block';
+            return;
+        }
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        let html = `<strong>✅ ${parsed.length}건 파싱됨:</strong><br>`;
+        parsed.forEach((p, i) => {
+            const d = new Date(p.date + 'T00:00:00');
+            const dayName = dayNames[d.getDay()];
+            html += `${i + 1}. ${d.getMonth() + 1}/${d.getDate()}(${dayName}) ${p.time} - ${p.reserverName}<br>`;
+        });
+        els.bulkLogPreview.innerHTML = html;
+        els.bulkLogPreview.style.display = 'block';
+    }
+
+    async function saveBulkLog() {
+        const text = els.bulkLogText.value;
+        const parsed = parseBulkLogText(text);
+
+        if (parsed.length === 0) {
+            return alert('등록할 일정이 없습니다. 미리보기로 확인해주세요.');
+        }
+
+        if (!confirm(`${parsed.length}건의 일정을 등록하시겠습니까?`)) return;
+
+        try {
+            const batch = db.batch();
+            
+            for (const item of parsed) {
+                const schedRef = db.collection('schedules').doc();
+                batch.set(schedRef, {
+                    date: item.date,
+                    time: item.time,
+                    reserverName: item.reserverName,
+                    companions: [],
+                    memo: '',
+                    status: 'CONFIRMED',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                const logRef = db.collection('applications_log').doc();
+                batch.set(logRef, {
+                    writerName: item.reserverName,
+                    companions: [],
+                    appliedAt: new Date(),
+                    targetVisitAt: new Date(`${item.date}T${item.time}:00`),
+                    resultStatus: '확정',
+                    memo: '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            await batch.commit();
+            showToast(`${parsed.length}건 등록 완료!`);
+            closeAllModals();
+        } catch (e) {
+            console.error(e);
+            alert('등록 실패: ' + e.message);
+        }
+    }
+
+    // --- Guestbook Functions ---
+    function createGuestbookEntry() {
+        const name = els.guestbookName.value.trim();
+        const message = els.guestbookMessage.value.trim();
+
+        if(!name || !message) return alert("이름과 메시지를 입력해주세요.");
+
+        db.collection('guestbook').add({
+            name: name,
+            message: message,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            showToast("방명록에 남겼습니다 💬");
+            els.guestbookName.value = '';
+            els.guestbookMessage.value = '';
+        }).catch(e => {
+            alert("저장 실패: " + e.message);
+        });
+    }
+
+    function fetchGuestbook() {
+        db.collection('guestbook').orderBy('createdAt', 'desc').limit(20)
+            .onSnapshot(snapshot => {
+                els.guestbookList.innerHTML = '';
+                if (snapshot.empty) {
+                    els.guestbookList.innerHTML = '<div style="text-align:center; color:#888; font-size:13px; padding:16px;">아직 방명록이 없어요 ✍️</div>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const div = document.createElement('div');
+                    div.className = 'guestbook-item';
+                    
+                    const dateStr = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString() : '';
+                    
+                    div.innerHTML = `
+                        <div class="guestbook-header">
+                            <span class="guestbook-name">${d.name}</span>
+                            <span class="guestbook-date">${dateStr}</span>
+                        </div>
+                        <div class="guestbook-message">${d.message}</div>
+                        ${state.isAdmin ? `<button class="btn btn-sm btn-danger" style="margin-top:4px; font-size:10px;" onclick="deleteGuestbook('${doc.id}')">삭제</button>` : ''}
+                    `;
+                    els.guestbookList.appendChild(div);
+                });
+            });
+    }
+
+    window.deleteGuestbook = (id) => {
+        if(!confirm("삭제하시겠습니까?")) return;
+        db.collection('guestbook').doc(id).delete().then(() => {
+            showToast("삭제되었습니다.");
+        });
+    };
+
+    // --- Helper: Cloud Function Caller ---
+    async function callFunction(name, data) {
+        try {
+            const fn = functions.httpsCallable(name);
+            await fn(data);
+            showToast("완료되었습니다.");
+            closeAllModals();
+        } catch (e) {
+            console.error(e);
+            alert("실패: " + e.message);
+        }
+    }
+
+    function resetLogForm() {
+        els.logWriter.value = '';
+        const now = new Date();
+        els.logTargetMonth.value = String(now.getMonth() + 1).padStart(2, '0');
+        updateLogDayOptions();
+        els.logTargetHour.value = '10';
+        els.logTargetMin.value = '00';
+        els.logStatus.value = '확정';
+        els.logMemo.value = '';
+        state.logCompanions = [];
+        renderLogCompanions();
+    }
+
+    function updateLogDayOptions() {
+        const month = parseInt(els.logTargetMonth.value);
+        const daysInMonth = new Date(2026, month, 0).getDate();
+        els.logTargetDay.innerHTML = '';
+        for (let d = 1; d <= daysInMonth; d++) {
+            const opt = document.createElement('option');
+            opt.value = String(d).padStart(2, '0');
+            opt.textContent = d + '일';
+            els.logTargetDay.appendChild(opt);
+        }
+    }
+
+    function updateAdminUI() {
+        if (state.isAdmin) {
+            els.adminModeBtn.innerText = "운영자 모드 🔓 (ON)";
+            els.adminModeBtn.classList.add('btn-primary');
+            els.adminModeBtn.classList.remove('btn-outline');
+            els.openBulkLogBtn.style.display = 'inline-block';
+        } else {
+            els.adminModeBtn.innerText = "운영자 모드 🔒";
+            els.adminModeBtn.classList.remove('btn-primary');
+            els.adminModeBtn.classList.add('btn-outline');
+            els.openBulkLogBtn.style.display = 'none';
+        }
+        // Refresh lists to show/hide admin controls
+        if (db) {
+            fetchLogs();
+            fetchGuestbook();
+        }
+    }
+
+    function closeAllModals() {
+        els.modals.forEach(m => m.classList.remove('active'));
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Start
+    init();
+</script>
+</body>
+</html>
