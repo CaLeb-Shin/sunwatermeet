@@ -207,6 +207,65 @@
 
         /* Guestbook */
         .guestbook-form { margin-bottom: 8px; }
+        
+        /* Notice Popup */
+        .notice-popup-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center;
+            justify-content: center; z-index: 2000; padding: 20px;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .notice-popup-overlay.active { opacity: 1; visibility: visible; }
+        .notice-popup {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px; max-width: 480px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+            transform: scale(0.9) translateY(20px); transition: all 0.3s ease;
+        }
+        .notice-popup-overlay.active .notice-popup { transform: scale(1) translateY(0); }
+        .notice-popup-header {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a5a96 100%);
+            color: white; padding: 20px 24px; text-align: center;
+        }
+        .notice-popup-header h2 { font-size: 20px; margin-bottom: 4px; }
+        .notice-popup-header p { font-size: 13px; opacity: 0.9; }
+        .notice-popup-body { padding: 24px; max-height: 60vh; overflow-y: auto; }
+        .notice-step {
+            display: flex; gap: 14px; margin-bottom: 18px; padding: 14px;
+            background: #f8fafc; border-radius: 12px; border-left: 4px solid var(--primary-color);
+        }
+        .notice-step-num {
+            width: 28px; height: 28px; background: var(--primary-color); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; flex-shrink: 0;
+        }
+        .notice-step-content { flex: 1; }
+        .notice-step-title { font-weight: 700; color: #333; margin-bottom: 4px; font-size: 14px; }
+        .notice-step-desc { font-size: 12px; color: #666; line-height: 1.5; }
+        .notice-tips { background: #fff8e6; border-radius: 12px; padding: 16px; margin-top: 8px; }
+        .notice-tips-title { font-weight: 700; color: #b8860b; margin-bottom: 10px; font-size: 14px; }
+        .notice-tip-item {
+            font-size: 12px; color: #666; margin-bottom: 8px; padding-left: 18px;
+            position: relative; line-height: 1.5;
+        }
+        .notice-tip-item::before {
+            content: "✦"; position: absolute; left: 0; color: #e6a500;
+        }
+        .notice-tip-item:last-child { margin-bottom: 0; }
+        .notice-tip-item strong { color: #b8860b; }
+        .notice-popup-footer {
+            padding: 16px 24px; border-top: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fafafa;
+        }
+        .notice-checkbox-label { font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .notice-checkbox-label input { width: 16px; height: 16px; accent-color: var(--primary-color); }
+        .notice-close-btn {
+            background: linear-gradient(135deg, #0f4c81 0%, #1a5a96 100%);
+            color: white; border: none; padding: 10px 24px; border-radius: 8px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .notice-close-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,76,129,0.3); }
         .guestbook-item {
             background: #f9fafb;
             border-radius: 8px;
@@ -256,7 +315,10 @@
     <header>
         <div>
             <h1>해수 만남의 광장</h1>
-            <div class="sub-title">서로의 시간을 맞추고, 함께 다녀올 수 있도록</div>
+            <div class="sub-title" style="font-size: 13px; line-height: 1.6; max-width: 500px;">
+                "내가 너와 함께 있어 네가 어디로 가든지 너를 지키며 너를 이끌어 이 땅으로 돌아오게 할지라 내가 네게 허락한 것을 다 이루기까지 너를 떠나지 아니하리라"
+                <span style="color: #0f4c81; font-weight: 600;"> - 창 28:15</span>
+            </div>
         </div>
         <div>
             <button id="adminModeBtn" class="btn btn-outline btn-sm">운영자 모드 🔒</button>
@@ -330,7 +392,7 @@
                     <div class="card-title">온라인민원 예약</div>
                 </div>
                 <div style="margin-bottom: 8px;">
-                    <a id="reservationLink" href="#" target="_blank" class="btn btn-primary" style="display:block; text-align:center; text-decoration:none;">예약 사이트 열기</a>
+                    <a id="reservationLink" href="https://minwon.moj.go.kr/minwon/1996/subview.do?enc=Zm5jdDF8QEB8JTJGcHJpc29uUmVzZXJ2YXRpb24lMkZtaW53b24lMkY0JTJGYXJ0Y2xTdGVwMS5kbyUzRg%3D%3D" target="_blank" class="btn btn-primary" style="display:block; text-align:center; text-decoration:none;">예약 사이트 열기</a>
                 </div>
                 <div style="margin-bottom: 12px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; font-size: 13px; color: #856404; font-weight: 600;">
                     ⚠️ 예약하신 이후에 <span style="color: #e63946; text-decoration: underline;">신청 내역기록</span>에 반드시 기록해주세요!
@@ -394,6 +456,54 @@
     </div>
 </div>
 
+<!-- Notice Popup -->
+<div id="noticePopup" class="notice-popup-overlay">
+    <div class="notice-popup">
+        <div class="notice-popup-header">
+            <h2>📢 해수 만남 신청 안내</h2>
+            <p>처음 오신 분들을 위한 가이드</p>
+        </div>
+        <div class="notice-popup-body">
+            <div class="notice-step">
+                <div class="notice-step-num">1</div>
+                <div class="notice-step-content">
+                    <div class="notice-step-title">달력에 확정된 일정이 있다면?</div>
+                    <div class="notice-step-desc">날짜를 클릭해서 <strong>동행자</strong>로 정보를 입력해주세요</div>
+                </div>
+            </div>
+            <div class="notice-step">
+                <div class="notice-step-num">2</div>
+                <div class="notice-step-content">
+                    <div class="notice-step-title">달력에 일정이 없다면?</div>
+                    <div class="notice-step-desc">'예약 사이트 열기' 클릭 → 법무부 사이트에서<br>접견 신청 후 확정받으세요</div>
+                </div>
+            </div>
+            <div class="notice-step">
+                <div class="notice-step-num">3</div>
+                <div class="notice-step-content">
+                    <div class="notice-step-title">확정 후 기록하기</div>
+                    <div class="notice-step-desc">'신청 내역 기록' 클릭 → 확정된 날짜와 시간을<br>입력하면 달력에 자동 등록됩니다</div>
+                </div>
+            </div>
+            <div class="notice-tips">
+                <div class="notice-tips-title">⚠️ 중요 안내</div>
+                <div class="notice-tip-item"><strong>만남은 하루 1번</strong>만 가능합니다</div>
+                <div class="notice-tip-item">누가 이미 다녀갔다면 <strong>그 날은 만날 수 없습니다</strong><br>일정을 잘 체크해주세요!</div>
+                <div class="notice-tip-item">많은 분들이 <strong>자주 방문</strong>하는 것이 좋습니다<br>(판사가 유의미하게 본다고 합니다)</div>
+                <div class="notice-tip-item">예약은 <strong>일주일 단위</strong>로 가능합니다<br>(예약 후 미방문 시 1주일간 접견 불가)</div>
+                <div class="notice-tip-item">보내는 물품: <strong>책</strong> 가능 (출판사별 확인 필요)</div>
+            </div>
+        </div>
+        <div class="notice-popup-footer">
+            <label class="notice-checkbox-label">
+                <input type="checkbox" id="noticeDontShowToday">
+                오늘 하루 보지 않기
+            </label>
+            <button class="notice-close-btn" onclick="closeNoticePopup()">확인했어요 ✓</button>
+        </div>
+    </div>
+</div>
+
 <!-- Schedule Modal -->
 <div id="scheduleModal" class="modal-overlay">
     <div class="modal">
@@ -415,10 +525,11 @@
                 <label>예약자 *</label>
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="schedReserver" class="form-input" required style="flex:1;">
-                    <select id="schedReserverRelation" class="form-select" style="width:80px;">
+                    <select id="schedReserverRelation" class="form-select" style="width:90px;">
                         <option value="가족">가족</option>
                         <option value="교회">교회</option>
                         <option value="친구">친구</option>
+                        <option value="친한사이">친한사이</option>
                         <option value="기타">기타</option>
                     </select>
                 </div>
@@ -442,10 +553,11 @@
                 <p style="font-size:13px; color:#666; margin-bottom:8px;">🙋 나도 동행하고 싶다면?</p>
                 <div style="display:flex; gap:6px;">
                     <input type="text" id="joinNameInput" class="form-input" placeholder="이름" style="flex:1;">
-                    <select id="joinRelationInput" class="form-select" style="width:80px;">
+                    <select id="joinRelationInput" class="form-select" style="width:90px;">
                         <option value="가족">가족</option>
                         <option value="교회">교회</option>
                         <option value="친구">친구</option>
+                        <option value="친한사이">친한사이</option>
                         <option value="기타">기타</option>
                     </select>
                     <button id="joinCompanionBtn" class="btn btn-primary">신청</button>
@@ -473,10 +585,11 @@
             <label>예약자 *</label>
             <div style="display:flex; gap:6px;">
                 <input type="text" id="logWriter" class="form-input" placeholder="이름" style="flex:1;">
-                <select id="logWriterRelation" class="form-select" style="width:80px;">
+                <select id="logWriterRelation" class="form-select" style="width:90px;">
                     <option value="가족">가족</option>
                     <option value="교회">교회</option>
                     <option value="친구">친구</option>
+                    <option value="친한사이">친한사이</option>
                     <option value="기타">기타</option>
                 </select>
             </div>
@@ -485,10 +598,11 @@
             <label>동행자 (Enter로 추가)</label>
             <div style="display:flex; gap:6px; margin-bottom:4px;">
                 <input type="text" id="logCompanionInput" class="form-input" placeholder="이름" style="flex:1;">
-                <select id="logCompanionRelation" class="form-select" style="width:80px;">
+                <select id="logCompanionRelation" class="form-select" style="width:90px;">
                     <option value="가족">가족</option>
                     <option value="교회">교회</option>
                     <option value="친구">친구</option>
+                    <option value="친한사이">친한사이</option>
                     <option value="기타">기타</option>
                 </select>
             </div>
@@ -1446,8 +1560,39 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
+    // --- Notice Popup ---
+    function showNoticePopup() {
+        const hideUntil = localStorage.getItem('noticeHideUntil');
+        const now = new Date().getTime();
+        
+        if (hideUntil && now < parseInt(hideUntil)) {
+            return; // 아직 숨김 기간 중
+        }
+        
+        setTimeout(() => {
+            document.getElementById('noticePopup').classList.add('active');
+        }, 500);
+    }
+    
+    function closeNoticePopup() {
+        const dontShowToday = document.getElementById('noticeDontShowToday').checked;
+        
+        if (dontShowToday) {
+            // 오늘 자정까지 숨김
+            const tomorrow = new Date();
+            tomorrow.setHours(24, 0, 0, 0);
+            localStorage.setItem('noticeHideUntil', tomorrow.getTime().toString());
+        }
+        
+        document.getElementById('noticePopup').classList.remove('active');
+    }
+    
+    // 전역에서 접근 가능하도록
+    window.closeNoticePopup = closeNoticePopup;
+
     // Start
     init();
+    showNoticePopup();
 </script>
 </body>
 </html>
