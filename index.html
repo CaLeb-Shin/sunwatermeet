@@ -320,9 +320,6 @@
                 <span style="color: #0f4c81; font-weight: 600;"> - 창 28:15</span>
             </div>
         </div>
-        <div>
-            <button id="adminModeBtn" class="btn btn-outline btn-sm">운영자 모드 🔒</button>
-        </div>
     </header>
 
     <!-- Address Card -->
@@ -437,6 +434,11 @@
             </div>
         </aside>
     </main>
+    
+    <!-- Hidden Admin Access -->
+    <div style="text-align: center; padding: 40px 0 20px; margin-top: 20px;">
+        <button id="adminModeBtn" style="background: none; border: none; color: #ccc; font-size: 11px; cursor: pointer; padding: 8px 12px; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'">⚙️</button>
+    </div>
 </div>
 
 <!-- Modals -->
@@ -1532,14 +1534,14 @@
 
     function updateAdminUI() {
         if (state.isAdmin) {
-            els.adminModeBtn.innerText = "운영자 모드 🔓 (ON)";
-            els.adminModeBtn.classList.add('btn-primary');
-            els.adminModeBtn.classList.remove('btn-outline');
+            els.adminModeBtn.innerText = "🔓";
+            els.adminModeBtn.style.color = "#0f4c81";
+            els.adminModeBtn.style.opacity = "1";
             els.openBulkLogBtn.style.display = 'inline-block';
         } else {
-            els.adminModeBtn.innerText = "운영자 모드 🔒";
-            els.adminModeBtn.classList.remove('btn-primary');
-            els.adminModeBtn.classList.add('btn-outline');
+            els.adminModeBtn.innerText = "⚙️";
+            els.adminModeBtn.style.color = "#ccc";
+            els.adminModeBtn.style.opacity = "0.5";
             els.openBulkLogBtn.style.display = 'none';
         }
         // Refresh lists to show/hide admin controls
