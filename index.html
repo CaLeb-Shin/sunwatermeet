@@ -8,10 +8,11 @@
     <!-- Open Graph / Social Media Preview -->
     <meta property="og:title" content="해수 만남의 광장">
     <meta property="og:description" content="내가 너와 함께 있어 네가 어디로 가든지 너를 지키며 너를 이끌어 이 땅으로 돌아오게 할지라 - 창세기 28:15">
-    <meta property="og:image" content="https://caleb-shin.github.io/sunwatermeet/og-image.png">
-    <meta property="og:url" content="https://caleb-shin.github.io/sunwatermeet/">
+    <meta property="og:image" content="https://sunwatermeet.web.app/og-image.png">
+    <meta property="og:url" content="https://sunwatermeet.web.app/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://sunwatermeet.web.app/og-image.png">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -77,6 +78,7 @@
         .day-cell:hover { border-color: var(--primary-color); background: #f0f7ff; }
         .day-cell.today { background: #eef6ff; border: 1px solid var(--primary-color); font-weight: bold; }
         .day-number { font-size: 14px; margin-bottom: 4px; display: block; }
+        .day-name { font-size: 10px; color: #888; display: none; }
         .schedule-dot-wrapper { position: relative; }
         .schedule-dot { font-size: 10px; padding: 2px 4px; border-radius: 4px; display: block; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         .schedule-tooltip {
@@ -234,10 +236,12 @@
             .card { padding: 14px; }
             .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .calendar-controls { flex-wrap: wrap; gap: 8px; }
-            .calendar-grid { gap: 4px; }
-            .day-cell { min-height: 60px; padding: 4px; }
-            .day-number { font-size: 12px; }
-            .schedule-dot { font-size: 9px; padding: 1px 3px; }
+            .calendar-grid { gap: 3px; }
+            .day-header { font-size: 11px; padding: 6px 0; }
+            .day-cell { min-height: 70px; padding: 4px; width: 100%; }
+            .day-number { font-size: 13px; font-weight: 600; }
+            .day-name { display: inline; font-size: 9px; color: #666; margin-left: 2px; }
+            .schedule-dot { font-size: 8px; padding: 1px 2px; }
             .toggle-container { width: 100%; justify-content: flex-start; }
             .modal { width: 95%; padding: 16px; }
             .btn { padding: 6px 12px; font-size: 13px; }
@@ -267,6 +271,7 @@
                 서울 구로구 천왕동 120번지(금오로 865)
                 <button class="btn btn-sm btn-outline copy-btn" data-text="서울 구로구 천왕동 120번지(금오로 865)">📋 복사</button>
             </div>
+            <p style="font-size: 12px; color: #e63946; font-weight: 600; margin-top: 6px;">⏰ 접견시간 20분 전 도착 필수!</p>
         </div>
         <div class="address-item">
             <span class="address-label">우편 주소</span>
@@ -357,7 +362,7 @@
             <!-- 3. Guestbook -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">💬 방명록</div>
+                    <div class="card-title">🙏 기도 방명록</div>
                 </div>
                 <div class="guestbook-form">
                     <input type="text" id="guestbookName" class="form-input" placeholder="이름" style="margin-bottom:8px;">
@@ -839,10 +844,14 @@
             const todayStr = new Date().toISOString().split('T')[0];
             if (dateStr === todayStr) cell.classList.add('today');
 
-            // Day Number
+            // Day Number with day name for mobile
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const cellDate = new Date(year, month, d);
+            const dayName = dayNames[cellDate.getDay()];
+            
             const numSpan = document.createElement('span');
             numSpan.className = 'day-number';
-            numSpan.innerText = d;
+            numSpan.innerHTML = `${d}<span class="day-name">${dayName}</span>`;
             cell.appendChild(numSpan);
 
             // Schedules for this day
@@ -1062,6 +1071,7 @@
     }
 
     function removeCompanion(index) {
+        if (!confirm('동행자를 삭제하시겠습니까?')) return;
         state.companions.splice(index, 1);
         renderCompanions();
     }
@@ -1143,6 +1153,7 @@
     }
 
     function removeLogCompanion(index) {
+        if (!confirm('동행자를 삭제하시겠습니까?')) return;
         state.logCompanions.splice(index, 1);
         renderLogCompanions();
     }
